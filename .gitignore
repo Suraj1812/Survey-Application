@@ -1,0 +1,14 @@
+# macOS
+.DS_Store
+
+# .NET
+bin/
+obj/
+
+# Angular
+node_modules/
+dist/
+
+# Secrets
+appsettings.Development.json
+.env

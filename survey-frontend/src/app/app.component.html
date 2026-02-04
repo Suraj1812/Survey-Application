@@ -1,0 +1,341 @@
+<div class="survey-container">
+  <div class="nav-bar" *ngIf="!isRespondentMode && currentView !== 'thankyou'">
+    <button
+      class="nav-button"
+      [class.active]="currentView === 'home'"
+      (click)="goToHome()"
+    >
+      Home
+    </button>
+    <button
+      class="nav-button"
+      [class.active]="currentView === 'create'"
+      (click)="goToCreateSurvey()"
+    >
+      Create Survey
+    </button>
+    <button
+      class="nav-button"
+      [class.active]="currentView === 'invite'"
+      (click)="goToInvite()"
+    >
+      Invite
+    </button>
+    <button
+      class="nav-button"
+      [class.active]="currentView === 'report'"
+      (click)="goToReport()"
+    >
+      Report
+    </button>
+  </div>
+
+  <div *ngIf="currentView === 'home' && !isRespondentMode" class="section">
+    <div class="home-welcome">
+      <h2>Survey Application</h2>
+      <p>Create surveys, invite respondents, and view reports</p>
+      <div class="link-input-group">
+        <input
+          class="input-field"
+          [(ngModel)]="uniqueLink"
+          placeholder="Enter your survey link here"
+        />
+        <button class="primary-button" (click)="loadSurveyForResponse()">
+          Open Survey
+        </button>
+      </div>
+    </div>
+  </div>
+  <div *ngIf="currentView === 'home' && isRespondentMode" class="section">
+    <div class="home-welcome">
+      <h2>Survey Link Invalid</h2>
+      <p>This survey link is invalid or has already been submitted.</p>
+      <p>Please contact the survey administrator.</p>
+    </div>
+  </div>
+
+  <div *ngIf="currentView === 'thankyou'" class="section">
+    <div class="home-welcome">
+      <h2>Thank You!</h2>
+      <p>Your response has been successfully submitted.</p>
+      <p>This survey link is no longer active.</p>
+    </div>
+  </div>
+
+  <div *ngIf="currentView === 'create'" class="section">
+    <h2>Create New Survey</h2>
+    <div class="form-group">
+      <label class="label">Survey Title</label>
+      <input
+        class="input-field"
+        [(ngModel)]="survey.title"
+        placeholder="Enter survey title"
+      />
+    </div>
+    <div class="form-group">
+      <label class="label">Description</label>
+      <textarea
+        class="textarea-field"
+        [(ngModel)]="survey.description"
+        placeholder="Enter survey description"
+      ></textarea>
+    </div>
+    <h3>Questions</h3>
+    <div
+      *ngFor="let question of survey.questions; let qIndex = index"
+      class="question-card"
+    >
+      <div class="question-header">
+        <input
+          class="input-field"
+          [(ngModel)]="question.text"
+          [name]="'question_' + qIndex"
+          placeholder="Enter question text"
+        />
+        <button
+          class="danger-button"
+          (click)="removeQuestion(qIndex)"
+          *ngIf="survey.questions.length > 1"
+        >
+          Remove Question
+        </button>
+      </div>
+      <h4>Options</h4>
+      <div
+        *ngFor="
+          let option of question.options;
+          let oIndex = index;
+          trackBy: trackByIndex
+        "
+        class="option-item"
+      >
+        <input
+          class="input-field"
+          [(ngModel)]="question.options[oIndex]"
+          [name]="'option_' + qIndex + '_' + oIndex"
+          placeholder="Option text"
+        />
+        <button
+          class="danger-button"
+          (click)="removeOption(qIndex, oIndex)"
+          *ngIf="question.options.length > 2"
+        >
+          Remove
+        </button>
+      </div>
+      <button class="secondary-button" (click)="addOption(qIndex)">
+        Add Option
+      </button>
+    </div>
+    <div class="button-group">
+      <button class="secondary-button" (click)="addQuestion()">
+        Add Question
+      </button>
+      <button class="success-button" (click)="createSurvey()">
+        Create Survey
+      </button>
+      <button class="secondary-button" (click)="goToHome()">Cancel</button>
+    </div>
+  </div>
+
+  <div *ngIf="currentView === 'invite'" class="section">
+    <h2>Invite Respondents</h2>
+    <p><strong>Survey ID:</strong> {{ surveyId }}</p>
+    <h3>Email Addresses</h3>
+    <div
+      *ngFor="let email of emails; let i = index; trackBy: trackByIndex"
+      class="email-item"
+    >
+      <input
+        class="input-field"
+        [(ngModel)]="emails[i]"
+        [name]="'email_' + i"
+        placeholder="Enter email address"
+        type="email"
+      />
+      <button
+        class="danger-button"
+        (click)="removeEmail(i)"
+        *ngIf="emails.length > 1"
+      >
+        Remove
+      </button>
+    </div>
+    <button class="secondary-button" (click)="addEmail()">Add Email</button>
+    <div class="button-group" style="margin-top: 30px">
+      <button class="primary-button" (click)="sendInvitations()">
+        Send Invitations
+      </button>
+      <button class="secondary-button" (click)="goToHome()">Cancel</button>
+    </div>
+  </div>
+
+  <div *ngIf="currentView === 'respond'" class="section">
+    <h2>{{ responseSurvey?.title }}</h2>
+    <p>{{ responseSurvey?.description }}</p>
+    <div *ngFor="let question of responseSurvey?.questions" class="survey-card">
+      <h3>{{ question.text }}</h3>
+      <div *ngFor="let option of question.options" class="radio-option">
+        <label class="radio-label">
+          <input
+            type="radio"
+            [name]="'question_' + question.id"
+            [value]="option.id"
+            [(ngModel)]="answers[question.id]"
+          />
+          {{ option.text }}
+        </label>
+      </div>
+    </div>
+    <div class="button-group">
+      <button class="success-button" (click)="submitResponse()">
+        Submit Survey
+      </button>
+      <button class="secondary-button" (click)="goToHome()">Cancel</button>
+    </div>
+  </div>
+
+  <div *ngIf="currentView === 'report'" class="p-6 bg-gray-100 min-h-screen">
+    <h2 class="text-3xl font-bold mb-6 text-gray-800">Survey Report</h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div class="bg-white p-4 rounded-xl shadow">
+        <h3 class="text-sm text-gray-500">Total Invitations</h3>
+        <p class="text-2xl font-bold text-black">
+          {{ report?.totalInvitations || 0 }}
+        </p>
+      </div>
+      <div class="bg-white p-4 rounded-xl shadow">
+        <h3 class="text-sm text-gray-500">Total Responses</h3>
+        <p class="text-2xl font-bold text-black">
+          {{ report?.totalResponses || 0 }}
+        </p>
+      </div>
+      <div class="bg-white p-4 rounded-xl shadow">
+        <h3 class="text-sm text-gray-500">Response Rate</h3>
+        <p class="text-2xl font-bold text-black">
+          {{ report?.responseRate || 0 }}%
+        </p>
+      </div>
+    </div>
+
+    <div class="mb-6">
+      <button
+        (click)="loadDetailedReport()"
+        class="px-5 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-indigo-700 transition"
+      >
+        Show Respondent Details
+      </button>
+    </div>
+
+    <div class="space-y-6">
+      <div
+        *ngFor="let question of report?.questionReports"
+        class="bg-white p-5 rounded-xl shadow"
+      >
+        <h4 class="text-lg font-semibold mb-3 text-gray-800">
+          {{ question.questionText }}
+        </h4>
+
+        <div class="overflow-x-auto">
+          <table class="min-w-full border border-gray-200 rounded-lg">
+            <thead class="bg-gray-50">
+              <tr>
+                <th
+                  class="px-4 py-2 text-left text-sm font-semibold text-gray-600"
+                >
+                  Option
+                </th>
+                <th
+                  class="px-4 py-2 text-left text-sm font-semibold text-gray-600"
+                >
+                  Count
+                </th>
+                <th
+                  class="px-4 py-2 text-left text-sm font-semibold text-gray-600"
+                >
+                  Percentage
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                *ngFor="let option of question.options"
+                class="border-t hover:bg-gray-50 transition"
+              >
+                <td class="px-4 py-2 text-gray-700">{{ option.optionText }}</td>
+                <td class="px-4 py-2 text-gray-700">{{ option.count }}</td>
+                <td class="px-4 py-2 text-gray-700">
+                  {{ option.percentage?.toFixed(2) }}%
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="showDetailedReport" class="mt-10">
+      <h3 class="text-2xl font-bold mb-4 text-gray-800">Respondent Answers</h3>
+
+      <div
+        *ngFor="let user of detailedReport"
+        class="bg-white p-5 mb-6 rounded-xl shadow"
+      >
+        <h4 class="text-black font-semibold mb-3">{{ user.email }}</h4>
+
+        <div class="overflow-x-auto">
+          <table class="min-w-full border border-gray-200 rounded-lg">
+            <thead class="bg-gray-50">
+              <tr>
+                <th
+                  class="px-4 py-2 text-left text-sm font-semibold text-gray-600"
+                >
+                  Question
+                </th>
+                <th
+                  class="px-4 py-2 text-left text-sm font-semibold text-gray-600"
+                >
+                  Selected Option
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                *ngFor="let ans of user.answers"
+                class="border-t hover:bg-gray-50 transition"
+              >
+                <td class="px-4 py-2 text-gray-700">{{ ans.question }}</td>
+                <td class="px-4 py-2 text-gray-700">
+                  {{ ans.selectedOption }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-6">
+      <button
+        (click)="goToHome()"
+        class="px-5 py-2 rounded-lg bg-gray-600 text-white font-semibold hover:bg-gray-700 transition"
+      >
+        Back to Home
+      </button>
+    </div>
+  </div>
+
+  <div
+    *ngIf="showToast"
+    class="toast-container"
+    [class.success]="toastType === 'success'"
+    [class.error]="toastType === 'error'"
+  >
+    <div class="toast-content">
+      <span class="toast-icon">{{ toastType === "success" ? "✓" : "✗" }}</span>
+      <span class="toast-message">{{ toastMessage }}</span>
+    </div>
+    <div class="toast-progress"></div>
+  </div>
+</div>
