@@ -63,7 +63,7 @@
   </div>
 
   <div *ngIf="currentView === 'create'" class="section">
-    <h2>Create New Survey</h2>
+    <h2 class="text-2xl font-semibold text-gray-800 mb-6">Create New Survey</h2>
     <div class="form-group">
       <label class="label">Survey Title</label>
       <input
@@ -107,22 +107,24 @@
           let oIndex = index;
           trackBy: trackByIndex
         "
-        class="option-item"
+        class="flex flex-col sm:flex-row sm:items-center gap-3 mb-3"
       >
         <input
-          class="input-field"
+          class="w-full sm:flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           [(ngModel)]="question.options[oIndex]"
           [name]="'option_' + qIndex + '_' + oIndex"
           placeholder="Option text"
         />
+
         <button
-          class="danger-button"
+          class="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition sm:w-auto w-full"
           (click)="removeOption(qIndex, oIndex)"
           *ngIf="question.options.length > 2"
         >
           Remove
         </button>
       </div>
+
       <button class="secondary-button" (click)="addOption(qIndex)">
         Add Option
       </button>
@@ -139,28 +141,38 @@
   </div>
 
   <div *ngIf="currentView === 'invite'" class="section">
-    <h2>Invite Respondents</h2>
-    <p><strong>Survey ID:</strong> {{ surveyId }}</p>
-    <h3>Email Addresses</h3>
+    <h2 class="text-2xl font-semibold text-gray-800 mb-1">
+      Invite Respondents
+    </h2>
+
+    <p class="text-sm text-gray-500 mb-6">
+      Survey ID:
+      <span class="font-medium text-gray-700">{{ surveyId }}</span>
+    </p>
+
+    <h3 class="text-lg font-semibold text-gray-700 mb-3">Email Addresses</h3>
+
     <div
       *ngFor="let email of emails; let i = index; trackBy: trackByIndex"
-      class="email-item"
+      class="flex flex-col sm:flex-row sm:items-center gap-3 mb-3"
     >
       <input
-        class="input-field"
+        class="w-full sm:flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         [(ngModel)]="emails[i]"
         [name]="'email_' + i"
         placeholder="Enter email address"
         type="email"
       />
+
       <button
-        class="danger-button"
+        class="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition sm:w-auto w-full"
         (click)="removeEmail(i)"
         *ngIf="emails.length > 1"
       >
         Remove
       </button>
     </div>
+
     <button class="secondary-button" (click)="addEmail()">Add Email</button>
     <div class="button-group" style="margin-top: 30px">
       <button class="primary-button" (click)="sendInvitations()">
@@ -170,28 +182,58 @@
     </div>
   </div>
 
-  <div *ngIf="currentView === 'respond'" class="section">
-    <h2>{{ responseSurvey?.title }}</h2>
-    <p>{{ responseSurvey?.description }}</p>
-    <div *ngFor="let question of responseSurvey?.questions" class="survey-card">
-      <h3>{{ question.text }}</h3>
-      <div *ngFor="let option of question.options" class="radio-option">
-        <label class="radio-label">
+  <div
+    *ngIf="currentView === 'respond'"
+    class="max-w-3xl mx-auto bg-white p-6 rounded-xl shadow-md"
+  >
+    <div class="mb-6">
+      <h2 class="text-2xl font-semibold text-gray-800">
+        Title : {{ responseSurvey?.title }}
+      </h2>
+      <p class="mt-2 text-gray-600">
+        Description : {{ responseSurvey?.description }}
+      </p>
+    </div>
+
+    <div
+      *ngFor="let question of responseSurvey?.questions"
+      class="mb-6 border border-gray-200 rounded-lg p-4"
+    >
+      <h3 class="text-lg font-medium text-gray-800 mb-4">
+        Q. {{ question.text }}
+      </h3>
+
+      <div
+        *ngFor="let option of question.options"
+        class="flex items-center mb-2"
+      >
+        <label class="flex items-center gap-3 cursor-pointer text-gray-700">
           <input
             type="radio"
+            class="h-4 w-4 text-blue-600 focus:ring-blue-500"
             [name]="'question_' + question.id"
             [value]="option.id"
             [(ngModel)]="answers[question.id]"
           />
-          {{ option.text }}
+          <span>{{ option.text }}</span>
         </label>
       </div>
     </div>
-    <div class="button-group">
-      <button class="success-button" (click)="submitResponse()">
+
+    <div class="flex justify-end gap-4 mt-8">
+      <button
+        class="px-6 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition"
+        (click)="submitResponse()"
+      >
         Submit Survey
       </button>
-      <button class="secondary-button" (click)="goToHome()">Cancel</button>
+
+      <button
+        class="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition"
+        (click)="goToHome()"
+      >
+        Cancel
+      </button>
     </div>
   </div>
 
@@ -216,6 +258,16 @@
         <p class="text-2xl font-bold text-black">
           {{ report?.responseRate || 0 }}%
         </p>
+      </div>
+    </div>
+
+    <div class="bg-white p-6 rounded-xl shadow mb-8 max-w-3xl">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">
+        Survey Response Overview
+      </h3>
+
+      <div class="radar-wrapper">
+        <canvas id="surveyRadarChart"></canvas>
       </div>
     </div>
 

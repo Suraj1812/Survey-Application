@@ -2,6 +2,8 @@ import { Component, OnInit } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
 import { ActivatedRoute, Router, NavigationEnd } from "@angular/router";
 
+declare var Chart: any;
+
 @Component({
   selector: "app-root",
   templateUrl: "./app.component.html",
@@ -25,6 +27,7 @@ export class AppComponent implements OnInit {
     return index;
   }
 
+  radarChart: any = null;
   detailedReport: any[] = [];
   showDetailedReport: boolean = false;
   emails: string[] = [""];
@@ -256,6 +259,10 @@ export class AppComponent implements OnInit {
           this.report = res;
           this.showDetailedReport = false;
           this.currentView = "report";
+
+          setTimeout(() => {
+            this.renderRadarChart();
+          }, 0);
         },
         (error) => {
           console.error("Error loading report:", error);
@@ -282,5 +289,144 @@ export class AppComponent implements OnInit {
           this.showNotification("Error loading detailed report", "error");
         },
       );
+  }
+
+  renderRadarChart() {
+    const canvas = document.getElementById(
+      "surveyRadarChart",
+    ) as HTMLCanvasElement;
+    if (!canvas) {
+      return;
+    }
+
+    if (!this.report || !this.report.questionReports) {
+      return;
+    }
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      return;
+    }
+
+    const labels = this.report.questionReports.map(function (
+      _: any,
+      i: number,
+    ) {
+      return (i + 1).toString();
+    });
+
+    const insideValues = this.report.questionReports.map(function (q: any) {
+      let total = 0;
+      let count = 0;
+
+      q.options.forEach(function (o: any) {
+        const value = Number(o.optionText);
+        if (!isNaN(value)) {
+          total += value * o.count;
+          count += o.count;
+        }
+      });
+
+      return count ? +(total / count).toFixed(2) : 0;
+    });
+
+    const outsideValues = this.report.questionReports.map(function (q: any) {
+      let total = 0;
+      let count = 0;
+
+      q.options.forEach(function (o: any) {
+        const value = Number(o.optionText);
+        if (!isNaN(value)) {
+          total += value * o.count;
+          count += o.count;
+        }
+      });
+
+      if (!count) {
+        return 0;
+      }
+
+      const avg = total / count;
+      let maxDeviation = 0;
+      let deviationValue = avg;
+
+      q.options.forEach(function (o: any) {
+        const value = Number(o.optionText);
+        if (!isNaN(value)) {
+          const deviation = Math.abs(value - avg);
+          if (deviation > maxDeviation) {
+            maxDeviation = deviation;
+            deviationValue = value;
+          }
+        }
+      });
+
+      return +deviationValue.toFixed(2);
+    });
+
+    if (this.radarChart) {
+      this.radarChart.destroy();
+    }
+
+    this.radarChart = new Chart(ctx, {
+      type: "radar",
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: "Inside view",
+            data: insideValues,
+            borderColor: "#3BC9DB",
+            backgroundColor: "rgba(59,201,219,0.25)",
+            borderWidth: 4,
+            pointRadius: 4,
+          },
+          {
+            label: "Outside view",
+            data: outsideValues,
+            borderColor: "#F06595",
+            backgroundColor: "rgba(240,101,149,0.25)",
+            borderWidth: 4,
+            pointRadius: 4,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        legend: {
+          position: "bottom",
+          labels: {
+            usePointStyle: true,
+            padding: 20,
+            fontSize: 13,
+          },
+        },
+        scale: {
+          ticks: {
+            min: 1,
+            max: 5,
+            stepSize: 1,
+            display: false,
+          },
+          gridLines: {
+            color: "#e5e7eb",
+          },
+          angleLines: {
+            color: "#e5e7eb",
+          },
+          pointLabels: {
+            fontSize: 13,
+            fontStyle: "bold",
+            fontColor: "#6b7280",
+          },
+        },
+        elements: {
+          line: {
+            tension: 0.35,
+          },
+        },
+      },
+    });
   }
 }

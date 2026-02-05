@@ -291,3 +291,8 @@
         width: 0%;
     }
 }
+
+canvas#surveyRadarChart {
+  width: 100% !important;
+  height: 360px !important;
+}
