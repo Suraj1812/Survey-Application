@@ -80,27 +80,38 @@
         placeholder="Enter survey description"
       ></textarea>
     </div>
-    <h3>Questions</h3>
+    <h3
+      class="mt-6 mb-4 text-base font-semibold text-gray-800 uppercase tracking-wide"
+    >
+      Questions
+    </h3>
+
     <div
       *ngFor="let question of survey.questions; let qIndex = index"
       class="question-card"
     >
-      <div class="question-header">
+      <div class="flex flex-col sm:flex-row sm:items-center gap-3">
         <input
-          class="input-field"
+          class="w-full sm:flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           [(ngModel)]="question.text"
           [name]="'question_' + qIndex"
           placeholder="Enter question text"
         />
+
         <button
-          class="danger-button"
+          class="w-full sm:w-auto px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition"
           (click)="removeQuestion(qIndex)"
           *ngIf="survey.questions.length > 1"
         >
           Remove Question
         </button>
       </div>
-      <h4>Options</h4>
+
+      <h4
+        class="mt-4 mb-3 text-sm font-semibold text-gray-700 uppercase tracking-wide"
+      >
+        Options
+      </h4>
       <div
         *ngFor="
           let option of question.options;
