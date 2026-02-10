@@ -20,13 +20,25 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend",
         policy =>
         {
-            policy.WithOrigins("https://survey-application-azure.vercel.app")
-                  .AllowAnyHeader()
-                  .AllowAnyMethod();
+            policy.WithOrigins(
+                    "https://survey-application-azure.vercel.app",
+                    "https://survey-application-production.up.railway.app",
+                    "http://localhost:4200",
+                    "http://localhost:3000"
+                )
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
         });
 });
 
 var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 using (var scope = app.Services.CreateScope())
 {
@@ -34,10 +46,9 @@ using (var scope = app.Services.CreateScope())
     db.Database.Migrate();
 }
 
+app.UseHttpsRedirection();
 app.UseRouting();
-
 app.UseCors("AllowFrontend");
-
+app.UseAuthorization();
 app.MapControllers();
-
 app.Run();

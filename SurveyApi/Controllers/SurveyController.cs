@@ -11,11 +11,13 @@ namespace SurveyApi.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IEmailService _emailService;
+        private readonly ILogger<SurveyController> _logger;
 
-        public SurveyController(AppDbContext context, IEmailService emailService)
+        public SurveyController(AppDbContext context, IEmailService emailService, ILogger<SurveyController> logger)
         {
             _context = context;
             _emailService = emailService;
+            _logger = logger;
         }
 
         [HttpGet]
@@ -95,43 +97,82 @@ namespace SurveyApi.Controllers
         [HttpPost("{surveyId}/invite")]
         public async Task<IActionResult> InviteRespondents(int surveyId, [FromBody] List<string> emails)
         {
-            var survey = await _context.Surveys.FindAsync(surveyId);
-            if (survey == null)
-                return NotFound("Survey not found");
-
-            var distinctEmails = emails.Distinct().ToList();
-            
-            foreach (var email in distinctEmails)
+            try
             {
-                var existingInvitation = await _context.Invitations
-                    .FirstOrDefaultAsync(i => i.Email == email && i.SurveyId == surveyId);
-                
-                if (existingInvitation != null)
-                {
-                    continue;
-                }
+                var survey = await _context.Surveys.FindAsync(surveyId);
+                if (survey == null)
+                    return NotFound("Survey not found");
 
-                var uniqueLink = Guid.NewGuid().ToString();
-                var invitation = new Invitation 
+                if (emails == null || !emails.Any())
+                    return BadRequest("No email addresses provided");
+
+                var distinctEmails = emails.Distinct().ToList();
+                var sentEmails = new List<string>();
+                var failedEmails = new List<string>();
+                
+                foreach (var email in distinctEmails)
+                {
+                    try
+                    {
+                        if (!IsValidEmail(email))
+                        {
+                            _logger.LogWarning($"Invalid email format: {email}");
+                            failedEmails.Add(email);
+                            continue;
+                        }
+
+                        var existingInvitation = await _context.Invitations
+                            .FirstOrDefaultAsync(i => i.Email == email && i.SurveyId == surveyId);
+                        
+                        if (existingInvitation != null)
+                        {
+                            _logger.LogInformation($"Email already invited: {email}");
+                            continue;
+                        }
+
+                        var uniqueLink = Guid.NewGuid().ToString();
+                        var invitation = new Invitation 
+                        { 
+                            Email = email, 
+                            SurveyId = surveyId,
+                            UniqueLink = uniqueLink,
+                            IsSubmitted = false
+                        };
+                        
+                        _context.Invitations.Add(invitation);
+                        
+                        await _emailService.SendInvitationEmailAsync(
+                            email, 
+                            uniqueLink, 
+                            survey.Title, 
+                            survey.Description
+                        );
+                        
+                        sentEmails.Add(email);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, $"Failed to send invitation to {email}");
+                        failedEmails.Add(email);
+                    }
+                }
+                
+                await _context.SaveChangesAsync();
+                
+                return Ok(new 
                 { 
-                    Email = email, 
-                    SurveyId = surveyId,
-                    UniqueLink = uniqueLink,
-                    IsSubmitted = false
-                };
-                
-                _context.Invitations.Add(invitation);
-                
-                await _emailService.SendInvitationEmailAsync(
-                    email, 
-                    uniqueLink, 
-                    survey.Title, 
-                    survey.Description
-                );
+                    message = "Invitations processed successfully!",
+                    sentCount = sentEmails.Count,
+                    failedCount = failedEmails.Count,
+                    sentEmails = sentEmails,
+                    failedEmails = failedEmails
+                });
             }
-            
-            await _context.SaveChangesAsync();
-            return Ok(new { message = "Invitations sent successfully!" });
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in InviteRespondents");
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
         }
 
         [HttpGet("respond/{uniqueLink}")]
@@ -263,6 +304,19 @@ namespace SurveyApi.Controllers
                 });
 
             return Ok(result);
+        }
+
+        private bool IsValidEmail(string email)
+        {
+            try
+            {
+                var addr = new System.Net.Mail.MailAddress(email);
+                return addr.Address == email;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

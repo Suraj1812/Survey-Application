@@ -19,22 +19,28 @@ namespace SurveyApi
         {
             try
             {
-                var smtpSettings = _config.GetSection("SmtpSettings");
+                var host = Environment.GetEnvironmentVariable("SMTP_HOST") ?? _config["SmtpSettings:Host"] ?? "smtp.gmail.com";
+                var portString = Environment.GetEnvironmentVariable("SMTP_PORT") ?? _config["SmtpSettings:Port"];
+                var port = ParsePort(portString);
+                var username = Environment.GetEnvironmentVariable("SMTP_USERNAME") ?? _config["SmtpSettings:Username"];
+                var password = Environment.GetEnvironmentVariable("SMTP_PASSWORD") ?? _config["SmtpSettings:Password"];
+                var from = Environment.GetEnvironmentVariable("SMTP_FROM") ?? _config["SmtpSettings:From"] ?? "noreply@surveyapp.com";
+                var baseUrl = Environment.GetEnvironmentVariable("BASE_URL") ?? _config["SmtpSettings:BaseUrl"] ?? "https://survey-application-azure.vercel.app";
                 
-                var host = smtpSettings["Host"] ?? "smtp.gmail.com";
-                var port = ParsePort(smtpSettings["Port"]);
-                var username = smtpSettings["Username"];
-                var password = smtpSettings["Password"];
-                var from = smtpSettings["From"] ?? "noreply@surveyapp.com";
-                var baseUrl = smtpSettings["BaseUrl"] ?? "http://localhost:4200";
+                if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+                {
+                    throw new InvalidOperationException("SMTP credentials are not configured properly");
+                }
+
+                _logger.LogInformation($"Attempting to send email to {to} via {host}:{port}");
                 
                 using var smtpClient = new SmtpClient(host)
                 {
                     Port = port,
                     Credentials = new NetworkCredential(username, password),
-                    EnableSsl = true,
+                    EnableSsl = port != 25,
                     DeliveryMethod = SmtpDeliveryMethod.Network,
-                    Timeout = 10000
+                    Timeout = 30000
                 };
 
                 var surveyUrl = $"{baseUrl}/#/survey/{uniqueLink}";
