@@ -1,6 +1,9 @@
 {
   "name": "survey-frontend",
   "version": "0.0.0",
+  "engines": {
+    "node": "16.x"
+  },
   "scripts": {
     "ng": "ng",
     "start": "ng serve --open --port 4200 --disable-host-check",
