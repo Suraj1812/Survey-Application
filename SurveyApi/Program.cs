@@ -17,10 +17,10 @@ builder.Services.AddScoped<SurveyApi.IEmailService, SurveyApi.EmailService>();
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll",
+    options.AddPolicy("AllowFrontend",
         policy =>
         {
-            policy.AllowAnyOrigin()
+            policy.WithOrigins("https://survey-application-azure.vercel.app")
                   .AllowAnyHeader()
                   .AllowAnyMethod();
         });
@@ -36,7 +36,7 @@ using (var scope = app.Services.CreateScope())
 
 app.UseRouting();
 
-app.UseCors("AllowAll");
+app.UseCors("AllowFrontend");
 
 app.MapControllers();
 
