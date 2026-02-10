@@ -3,7 +3,8 @@
   "builds": [
     {
       "src": "package.json",
-      "use": "@vercel/static-build"
+      "use": "@vercel/static-build",
+      "config": { "distDir": "dist/survey-frontend" }
     }
   ],
   "routes": [
@@ -12,11 +13,11 @@
       "dest": "/assets/$1"
     },
     {
-      "src": "/(.*\\.js)",
+      "src": "/(.+\\.js)$",
       "dest": "/$1"
     },
     {
-      "src": "/(.*\\.css)",
+      "src": "/(.+\\.css)$",
       "dest": "/$1"
     },
     {
