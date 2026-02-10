@@ -23,6 +23,10 @@ export class AppComponent implements OnInit {
     ],
   };
 
+  allSurveys: any[] = [];
+  selectedSurveyId: number | null = null;
+  isLoadingSurveys: boolean = false;
+
   trackByIndex(index: number, item: any) {
     return index;
   }
@@ -39,6 +43,7 @@ export class AppComponent implements OnInit {
   toastMessage: string = "";
   toastType: "success" | "error" = "success";
   showToast: boolean = false;
+  isSending: boolean = false;
 
   constructor(
     private http: HttpClient,
@@ -54,6 +59,7 @@ export class AppComponent implements OnInit {
     });
 
     this.checkHashForSurveyLink();
+    this.loadAllSurveys();
   }
 
   checkHashForSurveyLink() {
@@ -68,6 +74,32 @@ export class AppComponent implements OnInit {
       }
     } else {
       this.isRespondentMode = false;
+    }
+  }
+
+  loadAllSurveys() {
+    this.isLoadingSurveys = true;
+    this.http.get<any[]>("http://localhost:5168/api/Survey").subscribe(
+      (surveys) => {
+        this.allSurveys = surveys;
+        this.isLoadingSurveys = false;
+      },
+      (error) => {
+        console.error("Error loading surveys:", error);
+        this.isLoadingSurveys = false;
+      },
+    );
+  }
+
+  onSurveySelect() {
+    if (this.selectedSurveyId) {
+      this.surveyId = this.selectedSurveyId;
+      const selectedSurvey = this.allSurveys.find(
+        (s) => s.id === this.selectedSurveyId,
+      );
+      if (selectedSurvey) {
+        this.showNotification(`Survey "${selectedSurvey.title}" selected`);
+      }
     }
   }
 
@@ -126,6 +158,7 @@ export class AppComponent implements OnInit {
         this.surveyId = res.id;
         this.showNotification(`Survey created with ID: ${this.surveyId}`);
         this.currentView = "invite";
+        this.loadAllSurveys();
       },
       (error) => {
         console.error("Error creating survey:", error);
@@ -143,11 +176,15 @@ export class AppComponent implements OnInit {
   }
 
   sendInvitations() {
+    if (this.isSending) return;
+
     const validEmails = this.emails.filter((e) => e.trim() !== "");
     if (validEmails.length === 0) {
       this.showNotification("Please add at least one email address", "error");
       return;
     }
+
+    this.isSending = true;
 
     this.http
       .post(
@@ -159,10 +196,12 @@ export class AppComponent implements OnInit {
           this.showNotification("Invitations sent successfully!");
           this.currentView = "home";
           this.emails = [""];
+          this.isSending = false;
         },
         (error) => {
           console.error("Error sending invitations:", error);
           this.showNotification("Error sending invitations.", "error");
+          this.isSending = false;
         },
       );
   }
@@ -236,24 +275,32 @@ export class AppComponent implements OnInit {
     this.currentView = "home";
     this.uniqueLink = "";
     window.location.hash = "";
+    this.loadAllSurveys();
   }
 
   goToInvite() {
-    if (!this.surveyId || this.surveyId === 0) {
-      this.showNotification("Please create a survey first", "error");
+    if (!this.selectedSurveyId && !this.surveyId) {
+      this.showNotification("Please select or create a survey first", "error");
       return;
     }
+
+    if (this.selectedSurveyId) {
+      this.surveyId = this.selectedSurveyId;
+    }
+
     this.currentView = "invite";
   }
 
   goToReport() {
-    if (!this.surveyId || this.surveyId === 0) {
-      this.showNotification("Please create a survey first", "error");
+    if (!this.selectedSurveyId && !this.surveyId) {
+      this.showNotification("Please select or create a survey first", "error");
       return;
     }
 
+    const reportSurveyId = this.selectedSurveyId || this.surveyId;
+
     this.http
-      .get(`http://localhost:5168/api/Survey/${this.surveyId}/report`)
+      .get(`http://localhost:5168/api/Survey/${reportSurveyId}/report`)
       .subscribe(
         (res: any) => {
           this.report = res;
@@ -275,10 +322,12 @@ export class AppComponent implements OnInit {
   }
 
   loadDetailedReport() {
+    const reportSurveyId = this.selectedSurveyId || this.surveyId;
+
     this.http
       .get<
         any[]
-      >(`http://localhost:5168/api/Survey/${this.surveyId}/report/details`)
+      >(`http://localhost:5168/api/Survey/${reportSurveyId}/report/details`)
       .subscribe(
         (res) => {
           this.detailedReport = res;
@@ -428,5 +477,24 @@ export class AppComponent implements OnInit {
         },
       },
     });
+  }
+
+  getSelectedSurveyTitle(): string {
+    return this.report.surveyTitle || "N/A";
+  }
+
+  getReportSurveyId(): number {
+    return this.selectedSurveyId || this.surveyId || 0;
+  }
+
+  getOptionPercentage(option: any): string {
+    if (
+      !option ||
+      option.percentage === undefined ||
+      option.percentage === null
+    ) {
+      return "0.00";
+    }
+    return option.percentage.toFixed(2);
   }
 }

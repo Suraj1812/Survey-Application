@@ -296,3 +296,25 @@ canvas#surveyRadarChart {
   width: 100% !important;
   height: 360px !important;
 }
+
+.survey-container select {
+  padding: 0.5rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  background-color: white;
+  font-size: 0.875rem;
+}
+
+.survey-container select:focus {
+  outline: none;
+  ring: 2px;
+  ring-color: #3b82f6;
+}
+
+.flex.gap-3 {
+  gap: 0.75rem;
+}
+
+.whitespace-nowrap {
+  white-space: nowrap;
+}

@@ -18,6 +18,24 @@ namespace SurveyApi.Controllers
             _emailService = emailService;
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetAllSurveys()
+        {
+            var surveys = await _context.Surveys
+                .OrderByDescending(s => s.Id)
+                .Select(s => new 
+                { 
+                    s.Id, 
+                    s.Title,
+                    s.Description,
+                    TotalInvitations = s.Invitations.Count,
+                    TotalResponses = s.Invitations.Count(i => i.IsSubmitted)
+                })
+                .ToListAsync();
+                
+            return Ok(surveys);
+        }
+
         [HttpPost]
         public async Task<IActionResult> CreateSurvey([FromBody] Survey survey)
         {
@@ -223,29 +241,28 @@ namespace SurveyApi.Controllers
         }
 
         [HttpGet("{surveyId}/report/details")]
-public async Task<IActionResult> GetDetailedReport(int surveyId)
-{
-    var responses = await _context.Responses
-        .Include(r => r.Invitation)
-        .Include(r => r.Option)
-            .ThenInclude(o => o.Question)
-        .Where(r => r.Invitation.SurveyId == surveyId)
-        .ToListAsync();
-
-    var result = responses
-        .GroupBy(r => r.Invitation.Email)
-        .Select(group => new
+        public async Task<IActionResult> GetDetailedReport(int surveyId)
         {
-            Email = group.Key,
-            Answers = group.Select(r => new
-            {
-                Question = r.Option.Question.Text,
-                SelectedOption = r.Option.Text
-            }).ToList()
-        });
+            var responses = await _context.Responses
+                .Include(r => r.Invitation)
+                .Include(r => r.Option)
+                    .ThenInclude(o => o.Question)
+                .Where(r => r.Invitation.SurveyId == surveyId)
+                .ToListAsync();
 
-    return Ok(result);
-}
+            var result = responses
+                .GroupBy(r => r.Invitation.Email)
+                .Select(group => new
+                {
+                    Email = group.Key,
+                    Answers = group.Select(r => new
+                    {
+                        Question = r.Option.Question.Text,
+                        SelectedOption = r.Option.Text
+                    }).ToList()
+                });
 
+            return Ok(result);
+        }
     }
 }
