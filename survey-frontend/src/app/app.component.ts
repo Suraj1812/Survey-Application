@@ -1,6 +1,7 @@
 import { Component, OnInit } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
 import { ActivatedRoute, Router, NavigationEnd } from "@angular/router";
+import { environment } from "src/environments/environment";
 
 declare var Chart: any;
 
@@ -79,7 +80,7 @@ export class AppComponent implements OnInit {
 
   loadAllSurveys() {
     this.isLoadingSurveys = true;
-    this.http.get<any[]>("http://localhost:5168/api/Survey").subscribe(
+    this.http.get<any[]>(`${environment.apiUrl}/api/Survey`).subscribe(
       (surveys) => {
         this.allSurveys = surveys;
         this.isLoadingSurveys = false;
@@ -153,7 +154,7 @@ export class AppComponent implements OnInit {
       })),
     };
 
-    this.http.post("http://localhost:5168/api/Survey", surveyData).subscribe(
+    this.http.post(`${environment.apiUrl}/api/Survey`, surveyData).subscribe(
       (res: any) => {
         this.surveyId = res.id;
         this.showNotification(`Survey created with ID: ${this.surveyId}`);
@@ -188,7 +189,7 @@ export class AppComponent implements OnInit {
 
     this.http
       .post(
-        `http://localhost:5168/api/Survey/${this.surveyId}/invite`,
+        `${environment.apiUrl}/api/Survey/${this.surveyId}/invite`,
         validEmails,
       )
       .subscribe(
@@ -213,7 +214,7 @@ export class AppComponent implements OnInit {
     }
 
     this.http
-      .get(`http://localhost:5168/api/Survey/respond/${this.uniqueLink}`)
+      .get(`${environment.apiUrl}/api/Survey/respond/${this.uniqueLink}`)
       .subscribe(
         (res: any) => {
           this.responseSurvey = res.survey;
@@ -239,9 +240,10 @@ export class AppComponent implements OnInit {
 
     this.http
       .post(
-        `http://localhost:5168/api/Survey/respond/${this.uniqueLink}`,
+        `${environment.apiUrl}/api/Survey/respond/${this.uniqueLink}`,
         this.answers,
       )
+
       .subscribe(
         () => {
           this.showNotification("Response submitted successfully!");
@@ -300,7 +302,8 @@ export class AppComponent implements OnInit {
     const reportSurveyId = this.selectedSurveyId || this.surveyId;
 
     this.http
-      .get(`http://localhost:5168/api/Survey/${reportSurveyId}/report`)
+      .get(`${environment.apiUrl}/api/Survey/${reportSurveyId}/report`)
+
       .subscribe(
         (res: any) => {
           this.report = res;
@@ -325,9 +328,10 @@ export class AppComponent implements OnInit {
     const reportSurveyId = this.selectedSurveyId || this.surveyId;
 
     this.http
-      .get<
-        any[]
-      >(`http://localhost:5168/api/Survey/${reportSurveyId}/report/details`)
+      .get<any[]>(
+        `${environment.apiUrl}/api/Survey/${reportSurveyId}/report/details`,
+      )
+
       .subscribe(
         (res) => {
           this.detailedReport = res;
