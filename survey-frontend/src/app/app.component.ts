@@ -484,7 +484,16 @@ export class AppComponent implements OnInit {
   }
 
   getSelectedSurveyTitle(): string {
-    return this.report.surveyTitle || "N/A";
+
+    if (this.report && this.report.surveyTitle) {
+      return this.report.surveyTitle;
+    }
+
+    const selectedId = Number(this.selectedSurveyId || this.surveyId);
+
+    const selected = this.allSurveys.find((s) => s.id === selectedId);
+
+    return selected ? selected.title : "N/A";
   }
 
   getReportSurveyId(): number {
