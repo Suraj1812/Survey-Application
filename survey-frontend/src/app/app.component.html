@@ -88,12 +88,21 @@
     </div>
   </div>
 
-  <div *ngIf="currentView === 'create'" class="section">
+  <div
+    *ngIf="currentView === 'create'"
+    class="section"
+    style="
+      background-color: white;
+      border-radius: 0.75rem;
+      padding: 2rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    "
+  >
     <h2 class="text-2xl font-semibold text-gray-800 mb-6">Create New Survey</h2>
     <div class="form-group">
       <label class="label">Survey Title</label>
       <input
-        class="input-field"
+        class="w-full input-field"
         [(ngModel)]="survey.title"
         placeholder="Enter survey title"
       />
@@ -170,14 +179,23 @@
       <button class="secondary-button" (click)="addQuestion()">
         Add Question
       </button>
-      <button class="success-button" (click)="createSurvey()">
+      <button class="primary-button" (click)="createSurvey()">
         Create Survey
       </button>
       <button class="secondary-button" (click)="goToHome()">Cancel</button>
     </div>
   </div>
 
-  <div *ngIf="currentView === 'invite'" class="section">
+  <div
+    *ngIf="currentView === 'invite'"
+    class="section"
+    style="
+      background-color: white;
+      border-radius: 0.75rem;
+      padding: 2rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    "
+  >
     <h2 class="text-2xl font-semibold text-gray-800 mb-1">
       Invite Respondents
     </h2>

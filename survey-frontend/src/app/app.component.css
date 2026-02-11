@@ -133,6 +133,7 @@
     border: none;
     cursor: pointer;
     transition: background-color 0.2s;
+    margin-bottom: 20px;
 }
 
 .primary-button:hover:not(:disabled) {
@@ -153,25 +154,11 @@
     border: 1px solid #d1d5db;
     cursor: pointer;
     transition: all 0.2s;
+    margin-bottom: 20px;
 }
 
 .secondary-button:hover {
     background-color: #e5e7eb;
-}
-
-.success-button {
-    padding: 0.75rem 1.5rem;
-    background-color: #10b981;
-    color: white;
-    border-radius: 0.5rem;
-    font-weight: 500;
-    border: none;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-.success-button:hover {
-    background-color: #059669;
 }
 
 .toast-container {

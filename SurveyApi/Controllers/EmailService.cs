@@ -25,8 +25,8 @@ namespace SurveyApi
                 var username = Environment.GetEnvironmentVariable("SMTP_USERNAME") ?? _config["SmtpSettings:Username"];
                 var password = Environment.GetEnvironmentVariable("SMTP_PASSWORD") ?? _config["SmtpSettings:Password"];
                 var from = Environment.GetEnvironmentVariable("SMTP_FROM") ?? _config["SmtpSettings:From"] ?? "noreply@surveyapp.com";
-                var baseUrl = Environment.GetEnvironmentVariable("BASE_URL") ?? _config["SmtpSettings:BaseUrl"] ?? "https://survey-application-azure.vercel.app";
-                
+                var baseUrl = "http://localhost:4200";
+
                 if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
                 {
                     throw new InvalidOperationException("SMTP credentials are not configured properly");
@@ -42,8 +42,7 @@ namespace SurveyApi
                     DeliveryMethod = SmtpDeliveryMethod.Network,
                     Timeout = 30000
                 };
-
-                var surveyUrl = $"{baseUrl}/#/survey/{uniqueLink}";
+var surveyUrl = $"{baseUrl}/#/survey/{uniqueLink}";
                 
                 var mailMessage = new MailMessage
                 {
