@@ -8,6 +8,7 @@ obj/
 # Angular
 node_modules/
 dist/
+.angular/
 
 # Secrets
 appsettings.Development.json

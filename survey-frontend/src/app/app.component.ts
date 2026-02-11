@@ -1,19 +1,34 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnInit, OnDestroy } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
 import { ActivatedRoute, Router, NavigationEnd } from "@angular/router";
 import { environment } from "src/environments/environment";
+import Chart from "chart.js/auto";
+import { Subscription } from "rxjs";
 
-declare var Chart: any;
+interface Question {
+  id?: number;
+  text: string;
+  options: string[];
+}
+
+interface Survey {
+  id?: number;
+  title: string;
+  description: string;
+  questions: Question[];
+  totalResponses?: number;
+  totalInvitations?: number;
+}
 
 @Component({
   selector: "app-root",
   templateUrl: "./app.component.html",
   styleUrls: ["./app.component.css"],
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, OnDestroy {
   currentView = "home";
   isRespondentMode: boolean = false;
-  survey = {
+  survey: Survey = {
     title: "",
     description: "",
     questions: [
@@ -24,27 +39,29 @@ export class AppComponent implements OnInit {
     ],
   };
 
-  allSurveys: any[] = [];
+  allSurveys: Survey[] = [];
   selectedSurveyId: number | null = null;
   isLoadingSurveys: boolean = false;
 
-  trackByIndex(index: number, item: any) {
+  trackByIndex(index: number): number {
     return index;
   }
 
-  radarChart: any = null;
+  radarChart: Chart | null = null;
   detailedReport: any[] = [];
   showDetailedReport: boolean = false;
   emails: string[] = [""];
   uniqueLink = "";
   responseSurvey: any;
-  answers: any = {};
+  answers: { [key: number]: number } = {};
   report: any;
   surveyId: number = 0;
   toastMessage: string = "";
   toastType: "success" | "error" = "success";
   showToast: boolean = false;
   isSending: boolean = false;
+
+  private routerSubscription!: Subscription;
 
   constructor(
     private http: HttpClient,
@@ -53,7 +70,7 @@ export class AppComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.router.events.subscribe((event) => {
+    this.routerSubscription = this.router.events.subscribe((event) => {
       if (event instanceof NavigationEnd) {
         this.checkHashForSurveyLink();
       }
@@ -61,6 +78,15 @@ export class AppComponent implements OnInit {
 
     this.checkHashForSurveyLink();
     this.loadAllSurveys();
+  }
+
+  ngOnDestroy() {
+    if (this.routerSubscription) {
+      this.routerSubscription.unsubscribe();
+    }
+    if (this.radarChart) {
+      this.radarChart.destroy();
+    }
   }
 
   checkHashForSurveyLink() {
@@ -243,7 +269,6 @@ export class AppComponent implements OnInit {
         `${environment.apiUrl}/api/Survey/respond/${this.uniqueLink}`,
         this.answers,
       )
-
       .subscribe(
         () => {
           this.showNotification("Response submitted successfully!");
@@ -303,7 +328,6 @@ export class AppComponent implements OnInit {
 
     this.http
       .get(`${environment.apiUrl}/api/Survey/${reportSurveyId}/report`)
-
       .subscribe(
         (res: any) => {
           this.report = res;
@@ -328,10 +352,9 @@ export class AppComponent implements OnInit {
     const reportSurveyId = this.selectedSurveyId || this.surveyId;
 
     this.http
-      .get<any[]>(
-        `${environment.apiUrl}/api/Survey/${reportSurveyId}/report/details`,
-      )
-
+      .get<
+        any[]
+      >(`${environment.apiUrl}/api/Survey/${reportSurveyId}/report/details`)
       .subscribe(
         (res) => {
           this.detailedReport = res;
@@ -447,31 +470,39 @@ export class AppComponent implements OnInit {
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        legend: {
-          position: "bottom",
-          labels: {
-            usePointStyle: true,
-            padding: 20,
-            fontSize: 13,
+        plugins: {
+          legend: {
+            position: "bottom",
+            labels: {
+              usePointStyle: true,
+              padding: 20,
+              font: {
+                size: 13,
+              },
+            },
           },
         },
-        scale: {
-          ticks: {
+        scales: {
+          r: {
             min: 1,
             max: 5,
-            stepSize: 1,
-            display: false,
-          },
-          gridLines: {
-            color: "#e5e7eb",
-          },
-          angleLines: {
-            color: "#e5e7eb",
-          },
-          pointLabels: {
-            fontSize: 13,
-            fontStyle: "bold",
-            fontColor: "#6b7280",
+            ticks: {
+              stepSize: 1,
+              display: false,
+            },
+            grid: {
+              color: "#e5e7eb",
+            },
+            angleLines: {
+              color: "#e5e7eb",
+            },
+            pointLabels: {
+              font: {
+                size: 13,
+                weight: "bold",
+              },
+              color: "#6b7280",
+            },
           },
         },
         elements: {
@@ -484,7 +515,6 @@ export class AppComponent implements OnInit {
   }
 
   getSelectedSurveyTitle(): string {
-
     if (this.report && this.report.surveyTitle) {
       return this.report.surveyTitle;
     }
